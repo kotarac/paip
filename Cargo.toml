@@ -1,0 +1,13 @@
+[package]
+name = "paip"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.4", features = ["derive"] }
+serde = { version = "1.0.201", features = ["derive"] }
+serde_yaml = "0.9.34"
+reqwest = { version = "0.12.4", features = ["json", "blocking", "rustls-tls"], default-features = false }
+anyhow = "1.0.82"
+dirs = "5.0.1"
+serde_json = "1.0.116"

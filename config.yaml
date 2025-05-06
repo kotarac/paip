@@ -1,0 +1,11 @@
+llm:
+  provider: gemini
+  key: YOUR_GEMINI_API_KEY
+  timeout: 30
+  gemini:
+    model: gemini-2.0-flash
+
+prompt:
+  summarize: "Summarize the following text."
+  explain: "Explain the following concept."
+  french: "Translate the following text to French."
