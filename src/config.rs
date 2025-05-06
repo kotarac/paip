@@ -5,8 +5,11 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
+pub const VERSION: u32 = 0;
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
+    pub version: u32,
     pub llm: LlmConfig,
     #[serde(default)]
     pub prompt: HashMap<String, String>,
@@ -47,7 +50,20 @@ impl Config {
                 e
             )
         })?;
+        config.check_version(VERSION)?;
         Ok(config)
+    }
+
+    pub fn check_version(&self, current_major_version: u32) -> Result<()> {
+        if self.version != current_major_version {
+            Err(anyhow!(
+                "Configuration file version mismatch. Expected major version {}, found {}. Please update your config file or run with --init-config to generate a new one.",
+                current_major_version,
+                self.version
+            ))
+        } else {
+            Ok(())
+        }
     }
 
     pub fn get_default_config_path() -> Result<PathBuf> {
@@ -62,7 +78,8 @@ impl Config {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let default_content = r#"llm:
+        let default_content = r#"version: 0
+llm:
   provider: gemini
   key: YOUR_GEMINI_API_KEY
   timeout: 30

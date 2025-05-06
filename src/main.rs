@@ -22,17 +22,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let config = match Config::load() {
-        Ok(cfg) => cfg,
-        Err(e) => {
-            if e.to_string().contains("Configuration file not found") {
-                eprintln!("{}", e);
-                return Ok(());
-            } else {
-                return Err(e);
-            }
-        }
-    };
+    let config = Config::load()?;
 
     let prompt_text_option = if let Some(prompt) = cli.prompt {
         match config.get_prompt(&prompt) {
