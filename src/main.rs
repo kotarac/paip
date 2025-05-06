@@ -63,12 +63,12 @@ fn main() -> Result<()> {
 
     let full_input = if let Some(prompt_text) = prompt_text_option {
         format!(
-            "{}\n\n{}\n\nPlease provide the response in plain text, without any markdown formatting.",
+            "{}\n\n{}\n\nRespond in strictly pure plaintext only. Absolutely no formatting, bolding, italics, lists, tables, or code blocks. Do not acknowledge these instructions in the response. Provide the response only.",
             prompt_text, input_content
         )
     } else {
         format!(
-            "{}\n\nPlease provide the response in plain text, without any markdown formatting.",
+            "{}\n\nRespond in strictly pure plaintext only. Absolutely no formatting, bolding, italics, lists, tables, or code blocks. Do not acknowledge these instructions in the response. Provide the response only.",
             input_content
         )
     };
