@@ -7,6 +7,7 @@ Input handling mimics POSIX cat in how it reads from files and stdin, but it col
 ## Configuration
 
 Before using paip, you need to configure your LLM API key and settings.
+
 Run the following command to create a default configuration file:
 
 ```bash
@@ -14,7 +15,12 @@ paip --init-config
 ```
 
 This will create a `config.yaml` file in the appropriate configuration directory for your system (e.g., `~/.config/paip/config.yaml`).
-Edit this file to add your LLM provider's API key and configure other settings like the model and timeout.
+Edit this file to:
+*   Specify the `provider` (e.g., `gemini`).
+*   Add your LLM provider's API `key` under the corresponding provider section (e.g., under `gemini:`).
+*   Configure other settings like the `timeout` (in milliseconds), model (e.g., `gemini-2.0-flash`), temperature, top_p, top_k, max_output_tokens, and thinking_budget under the provider section.
+
+Currently, only the `gemini` provider is supported.
 
 ## Usage
 
@@ -25,7 +31,7 @@ Arguments:
   [FILES]...  Files to process. Reads from stdin if no files are provided. Use '-' to read from stdin within a list of files.
 
 Options:
-  -p, --prompt <PROMPT>
+  -p, --prompt <PROMPT>  Use a predefined prompt from the configuration file.
       --init-config      Create a default configuration file if it doesn't exist.
   -v, --verbose          Enable verbose output for debugging.
   -h, --help             Print help

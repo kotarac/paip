@@ -24,28 +24,42 @@ pub struct LlmClient {
     api_key: String,
     client: Client,
     config: Config,
+    verbose: bool,
 }
 
 impl LlmClient {
-    pub fn new(provider: LlmProvider, config: &Config) -> Result<Self> {
-        let key = config.llm.key.clone();
+    pub fn new(config: &Config, verbose: bool) -> Result<Self> {
+        let provider_enum = match config.provider.as_str() {
+            "gemini" => LlmProvider::Gemini,
+            _ => return Err(anyhow!("Unsupported LLM provider: {}", config.provider)),
+        };
 
-        if key.is_empty() || key == "YOUR_GEMINI_API_KEY" {
+        let api_key = match provider_enum {
+            LlmProvider::Gemini => config
+                .gemini
+                .as_ref()
+                .ok_or_else(|| anyhow!("Gemini configuration not found for provider 'gemini'"))?
+                .key
+                .clone(),
+        };
+
+        if api_key.is_empty() || api_key == "YOUR_GEMINI_API_KEY" {
             return Err(anyhow!(
                 "API key is not configured for provider: {}",
-                provider.as_str()
+                provider_enum.as_str()
             ));
         }
 
         let client = Client::builder()
-            .timeout(Duration::from_secs(config.llm.timeout))
+            .timeout(Duration::from_millis(config.timeout.into()))
             .build()?;
 
         Ok(Self {
-            provider,
-            api_key: key,
+            provider: provider_enum,
+            api_key,
             client,
             config: config.clone(),
+            verbose,
         })
     }
 
@@ -58,7 +72,6 @@ impl LlmClient {
     fn send_gemini_request(&self, prompt: &str) -> Result<String> {
         let gemini_config = self
             .config
-            .llm
             .gemini
             .as_ref()
             .ok_or_else(|| anyhow!("Gemini configuration not found"))?;
@@ -80,8 +93,30 @@ impl LlmClient {
         }
 
         #[derive(Serialize)]
+        struct ApiThinkingConfig {
+            #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingBudget")]
+            thinking_budget: Option<u32>,
+        }
+
+        #[derive(Serialize)]
+        struct ApiGenerationConfig {
+            #[serde(skip_serializing_if = "Option::is_none", rename = "temperature")]
+            temperature: Option<f32>,
+            #[serde(skip_serializing_if = "Option::is_none", rename = "topP")]
+            top_p: Option<f32>,
+            #[serde(skip_serializing_if = "Option::is_none", rename = "topK")]
+            top_k: Option<u32>,
+            #[serde(skip_serializing_if = "Option::is_none", rename = "maxOutputTokens")]
+            max_output_tokens: Option<u32>,
+            #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingConfig")]
+            thinking_config: Option<ApiThinkingConfig>,
+        }
+
+        #[derive(Serialize)]
         struct RequestBody {
             contents: Vec<Content>,
+            #[serde(skip_serializing_if = "Option::is_none", rename = "generationConfig")]
+            generation_config: Option<ApiGenerationConfig>,
         }
 
         #[derive(Deserialize, Debug)]
@@ -101,13 +136,31 @@ impl LlmClient {
             message: String,
         }
 
+        let api_generation_config = self.config.gemini.as_ref().map(|gc| ApiGenerationConfig {
+            temperature: gc.temperature,
+            top_p: gc.top_p,
+            top_k: gc.top_k,
+            max_output_tokens: gc.max_output_tokens,
+            thinking_config: gc.thinking_budget.map(|tb| ApiThinkingConfig {
+                thinking_budget: Some(tb),
+            }),
+        });
+
         let request_body = RequestBody {
             contents: vec![Content {
                 parts: vec![Part {
                     text: prompt.to_string(),
                 }],
             }],
+            generation_config: api_generation_config,
         };
+
+        if self.verbose {
+            eprintln!("--- LLM API Request ---");
+            eprintln!("URL: {}", url);
+            eprintln!("Body: {}", serde_json::to_string_pretty(&request_body)?);
+            eprintln!("-----------------------");
+        }
 
         let res = self.client.post(&url).json(&request_body).send()?;
 

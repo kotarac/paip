@@ -1,9 +1,16 @@
-llm:
-  provider: gemini
+version: 0
+
+provider: gemini
+timeout: 30000
+
+gemini:
   key: YOUR_GEMINI_API_KEY
-  timeout: 30
-  gemini:
-    model: gemini-2.0-flash
+  model: gemini-2.5-flash-preview-04-17
+  temperature: 0
+  top_p: 0.95
+  top_k: 40
+  max_output_tokens: 8192
+  thinking_budget: 0
 
 prompt:
   summarize: "Summarize the following text."

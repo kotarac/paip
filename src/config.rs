@@ -10,27 +10,28 @@ pub const VERSION: u32 = 0;
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub version: u32,
-    pub llm: LlmConfig,
+    pub provider: String,
+    pub timeout: u32,
+    #[serde(default)]
+    pub gemini: Option<GeminiConfig>,
     #[serde(default)]
     pub prompt: HashMap<String, String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct LlmConfig {
-    pub key: String,
-    #[serde(default)]
-    pub gemini: Option<GeminiConfig>,
-    #[serde(default = "default_timeout_value")]
-    pub timeout: u64,
-}
-
-fn default_timeout_value() -> u64 {
-    60
-}
-
-#[derive(Debug, Deserialize, Clone)]
 pub struct GeminiConfig {
+    pub key: String,
     pub model: String,
+    #[serde(default)]
+    pub temperature: Option<f32>,
+    #[serde(default)]
+    pub top_p: Option<f32>,
+    #[serde(default)]
+    pub top_k: Option<u32>,
+    #[serde(default)]
+    pub max_output_tokens: Option<u32>,
+    #[serde(default)]
+    pub thinking_budget: Option<u32>,
 }
 
 impl Config {
@@ -79,12 +80,18 @@ impl Config {
             fs::create_dir_all(parent)?;
         }
         let default_content = r#"version: 0
-llm:
-  provider: gemini
+
+provider: gemini
+timeout: 30000
+
+gemini:
   key: YOUR_GEMINI_API_KEY
-  timeout: 30
-  gemini:
-    model: gemini-2.0-flash
+  model: gemini-2.5-flash-preview-04-17
+  temperature: 0
+  top_p: 0.95
+  top_k: 40
+  max_output_tokens: 8192
+  thinking_budget: 0
 
 prompt:
   summarize: "Summarize the following text."

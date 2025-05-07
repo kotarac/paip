@@ -9,7 +9,7 @@ mod llm;
 
 use cli::Cli;
 use config::Config;
-use llm::{LlmClient, LlmProvider};
+use llm::LlmClient;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -25,13 +25,7 @@ fn main() -> Result<()> {
     let config = Config::load()?;
 
     let prompt_text_option = if let Some(prompt) = cli.prompt {
-        match config.get_prompt(&prompt) {
-            Ok(text) => Some(text),
-            Err(e) => {
-                eprintln!("{}", e);
-                return Ok(());
-            }
-        }
+        Some(config.get_prompt(&prompt)?)
     } else {
         None
     };
@@ -79,9 +73,7 @@ fn main() -> Result<()> {
         eprintln!("-------------------------");
     }
 
-    let provider = LlmProvider::Gemini;
-
-    let llm_client = LlmClient::new(provider, &config)?;
+    let llm_client = LlmClient::new(&config, cli.verbose)?;
 
     let response = llm_client.send_request(&full_input)?;
 
