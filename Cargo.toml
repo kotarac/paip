@@ -3,6 +3,12 @@ name = "paip"
 version = "0.1.0"
 edition = "2024"
 
+authors = ["Stipe Kotarac <stipe@kotarac.net>"]
+license = "GPL-2.0-only"
+description = "like cat but through llm"
+homepage = "https://github.com/kotarac/paip"
+repository = "https://github.com/kotarac/paip"
+
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 serde = { version = "1.0.201", features = ["derive"] }
