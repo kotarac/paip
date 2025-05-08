@@ -22,12 +22,12 @@ prompt:
   commit: |
     Write a conventional commit message in the following form.
 
-    <type>[optional scope]: <description>
+    type(optional scope): description
 
     [optional body]
 
     [optional footer(s)]
 
-    Description lowercase, imperative style.
-    Body and footer proper sentences, proper case, concise, imperative style.
-    Use types fix, feat, chore, ci, docs, refactor, perf, test where appropriate.
+    Use type fix, feat, chore, ci, docs, refactor, perf, test where appropriate.
+    Description start lowercase, imperative style.
+    Body complete sentences, proper case, concise, imperative style.
