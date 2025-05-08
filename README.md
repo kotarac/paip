@@ -78,6 +78,12 @@ Find issues in last 3 git commits:
 git log -3 -p | paip -m 'Any issues?'
 ```
 
+Write a conventional commit message for staged changes and pipe it to git commit while allowing editing:
+
+```bash
+git diff --cached | paip -p commit | git commit -e -F -
+```
+
 ## License
 
 GPL-2.0-only

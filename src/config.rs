@@ -100,9 +100,24 @@ gemini:
   thinking_budget: 0
 
 prompt:
-  summarize: "Summarize the following text."
-  explain: "Explain the following concept."
-  french: "Translate the following text to French."
+  summarize: Summarize the following text.
+
+  explain: Explain the following concept.
+
+  french: Translate the following text to French.
+
+  commit: |
+    Write a conventional commit message in the following form.
+
+    <type>[optional scope]: <description>
+
+    [optional body]
+
+    [optional footer(s)]
+
+    Description lowercase, imperative style.
+    Body and footer proper sentences, proper case, concise, imperative style.
+    Use types fix, feat, chore, ci, docs, refactor, perf, test where appropriate.
 "#;
     fs::write(path, default_content)?;
     Ok(())
