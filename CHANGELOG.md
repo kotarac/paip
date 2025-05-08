@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/kotarac/paip/compare/v0.1.0...v0.1.1) (2025-05-08)
+
+
+### Bug Fixes
+
+* tweak commit prompt ([77c79c9](https://github.com/kotarac/paip/commit/77c79c9d43d2bf93b13f7b13a4ddab32a0ad0dd7))
+
 ## 0.1.0 (2025-05-08)
 
 
