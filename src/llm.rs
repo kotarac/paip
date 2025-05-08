@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::time::Duration;
 
-use crate::config::Config;
+use crate::config::{Config, GeminiConfig};
 
 #[derive(Debug, Clone, Copy)]
 pub enum LlmProvider {
@@ -70,7 +70,7 @@ impl LlmClient {
     }
 
     fn send_gemini_request(&self, prompt: &str) -> Result<String> {
-        let gemini_config = self
+        let gemini_config: &GeminiConfig = self
             .config
             .gemini
             .as_ref()

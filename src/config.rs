@@ -34,52 +34,58 @@ pub struct GeminiConfig {
     pub thinking_budget: Option<u32>,
 }
 
-impl Config {
-    pub fn load() -> Result<Self> {
-        let config_path = Self::get_default_config_path()?;
-        let config_str = fs::read_to_string(&config_path).map_err(|e| {
-            if e.kind() == std::io::ErrorKind::NotFound {
-                anyhow!("Configuration file not found at {}. Run with --init-config to create a default.", config_path.display())
-            } else {
-                anyhow!("Failed to read configuration file at {}: {}", config_path.display(), e)
-            }
-        })?;
-        let config: Self = serde_yaml::from_str(&config_str).map_err(|e| {
+pub fn load() -> Result<Config> {
+    let config_path = get_path()?;
+    let config_str = fs::read_to_string(&config_path).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
             anyhow!(
-                "Failed to parse configuration file at {}: {}",
+                "Configuration file not found at {}. Run with --init-config to create a default.",
+                config_path.display()
+            )
+        } else {
+            anyhow!(
+                "Failed to read configuration file at {}: {}",
                 config_path.display(),
                 e
             )
-        })?;
-        config.check_version(VERSION)?;
-        Ok(config)
-    }
-
-    pub fn check_version(&self, current_major_version: u32) -> Result<()> {
-        if self.version != current_major_version {
-            Err(anyhow!(
-                "Configuration file version mismatch. Expected major version {}, found {}. Please update your config file or run with --init-config to generate a new one.",
-                current_major_version,
-                self.version
-            ))
-        } else {
-            Ok(())
         }
-    }
+    })?;
+    let config: Config = serde_yaml::from_str(&config_str).map_err(|e| {
+        anyhow!(
+            "Failed to parse configuration file at {}: {}",
+            config_path.display(),
+            e
+        )
+    })?;
+    ensure_version(&config)?;
+    Ok(config)
+}
 
-    pub fn get_default_config_path() -> Result<PathBuf> {
-        let mut config_dir =
-            dirs::config_dir().ok_or_else(|| anyhow!("Could not find config directory"))?;
-        config_dir.push("paip");
-        config_dir.push("config.yaml");
-        Ok(config_dir)
+fn ensure_version(config: &Config) -> Result<()> {
+    if config.version != VERSION {
+        Err(anyhow!(
+            "Configuration file version mismatch. Expected major version {}, found {}. Please update your config file or run with --init-config to generate a new one.",
+            VERSION,
+            config.version
+        ))
+    } else {
+        Ok(())
     }
+}
 
-    pub fn create_default_config(path: &PathBuf) -> Result<()> {
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        let default_content = r#"version: 0
+fn get_path() -> Result<PathBuf> {
+    let mut config_dir =
+        dirs::config_dir().ok_or_else(|| anyhow!("Could not find config directory"))?;
+    config_dir.push("paip");
+    config_dir.push("config.yaml");
+    Ok(config_dir)
+}
+
+fn create_default(path: &PathBuf) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let default_content = r#"version: 0
 
 provider: gemini
 timeout: 30000
@@ -98,14 +104,14 @@ prompt:
   explain: "Explain the following concept."
   french: "Translate the following text to French."
 "#;
-        fs::write(path, default_content)?;
-        Ok(())
-    }
+    fs::write(path, default_content)?;
+    Ok(())
+}
 
-    pub fn get_prompt(&self, name: &str) -> Result<String> {
-        self.prompt
-            .get(name)
-            .cloned()
-            .ok_or_else(|| anyhow!("Prompt '{}' not found in configuration.", name))
-    }
+pub fn init_default() -> Result<()> {
+    let path = get_path()?;
+    create_default(&path)?;
+    println!("Default config file created at: {}", path.display());
+    println!("Please edit the config file with your LLM provider details.");
+    Ok(())
 }

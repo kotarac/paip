@@ -11,3 +11,6 @@ reqwest = { version = "0.12.4", features = ["json", "blocking", "rustls-tls"], d
 anyhow = "1.0.82"
 dirs = "5.0.1"
 serde_json = "1.0.116"
+
+[dev-dependencies]
+tempfile = "3.10.1"
