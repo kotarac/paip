@@ -92,7 +92,7 @@ timeout: 30000
 
 gemini:
   key: YOUR_GEMINI_API_KEY
-  model: gemini-2.5-flash-preview-04-17
+  model: gemini-2.5-flash-preview-05-20
   temperature: 0
   top_p: 0.95
   top_k: 64
