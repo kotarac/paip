@@ -8,7 +8,7 @@ gemini:
   model: gemini-2.5-flash-preview-04-17
   temperature: 0
   top_p: 0.95
-  top_k: 40
+  top_k: 64
   max_output_tokens: 8192
   thinking_budget: 0
 
