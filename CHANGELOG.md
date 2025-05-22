@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/kotarac/paip/compare/v0.1.1...v0.1.2) (2025-05-22)
+
+
+### Bug Fixes
+
+* tweak gemini top_k default ([3e9d49e](https://github.com/kotarac/paip/commit/3e9d49e8409cf21c091ca36e280062cfdb806f82))
+
 ## [0.1.1](https://github.com/kotarac/paip/compare/v0.1.0...v0.1.1) (2025-05-08)
 
 
