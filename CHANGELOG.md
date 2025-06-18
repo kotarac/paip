@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/kotarac/paip/compare/v0.1.3...v0.1.4) (2025-06-18)
+
+
+### Bug Fixes
+
+* default to gemini-2.5-flash ([46a155d](https://github.com/kotarac/paip/commit/46a155de284b37aba4c55f9b76d3c1c4cf4da8cb))
+
 ## [0.1.3](https://github.com/kotarac/paip/compare/v0.1.2...v0.1.3) (2025-05-22)
 
 
