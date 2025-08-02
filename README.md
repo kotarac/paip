@@ -14,7 +14,7 @@ Run the following command to create a default configuration file:
 paip --init-config
 ```
 
-This will create a `config.yaml` file in the appropriate configuration directory for your system (e.g., `~/.config/paip/config.yaml`).
+This will create a `config.toml` file in the appropriate configuration directory for your system (e.g., `~/.config/paip/config.toml`).
 Edit this file to:
 
 - Specify the `provider` (e.g., `gemini`).
@@ -82,6 +82,18 @@ Write a conventional commit message for staged changes and pipe it to git commit
 
 ```bash
 git diff --cached | paip -p commit | git commit -e -F -
+```
+
+Translate text to Italian:
+
+```bash
+echo "Hello world" | paip -p italian
+```
+
+Review code:
+
+```bash
+git diff --cached | paip -p review
 ```
 
 ## License
