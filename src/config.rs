@@ -49,7 +49,7 @@ pub fn load() -> Result<Config> {
             )
         }
     })?;
-    let config: Config = serde_yaml::from_str(&config_str).map_err(|e| {
+    let config: Config = toml::from_str(&config_str).map_err(|e| {
         anyhow!(
             "Failed to parse configuration file at {}: {}",
             config_path.display(),
@@ -76,7 +76,7 @@ fn get_path() -> Result<PathBuf> {
     let mut config_dir =
         dirs::config_dir().ok_or_else(|| anyhow!("Could not find config directory"))?;
     config_dir.push("paip");
-    config_dir.push("config.yaml");
+    config_dir.push("config.toml");
     Ok(config_dir)
 }
 
@@ -84,39 +84,52 @@ fn create_default(path: &PathBuf) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let default_content = r#"version: 0
+    let default_content = r#"version = 0
 
-provider: gemini
-timeout: 30000
+provider = "gemini"
+timeout = 90000
 
-gemini:
-  key: YOUR_GEMINI_API_KEY
-  model: gemini-2.5-flash
-  temperature: 0
-  top_p: 0.95
-  top_k: 64
-  max_output_tokens: 8192
-  thinking_budget: 0
+[gemini]
+key = "YOUR_GEMINI_API_KEY"
+model = "gemini-2.5-flash"
+temperature = 0.0
+top_p = 0.95
+top_k = 64
+max_output_tokens = 65536
+thinking_budget = 0
 
-prompt:
-  summarize: Summarize the following text.
+[prompt]
+summarize = "Summarize the following text."
+explain = "Explain the following concept."
+french = "Translate the following text to French."
+italian = "Translate the following text to Italian."
+latin = "Translate the following text to Latin."
 
-  explain: Explain the following concept.
+commit = """
+Write a conventional commit message in the following form.
 
-  french: Translate the following text to French.
+type(optional scope): description
 
-  commit: |
-    Write a conventional commit message in the following form.
+[optional body]
 
-    type(optional scope): description
+[optional footer(s)]
 
-    [optional body]
+Use one of the following types: feat, fix, build, chore, ci, docs, perf, refactor, style, test.
 
-    [optional footer(s)]
+Start the description with a lowercase letter and use the imperative mood.
 
-    Use type fix, feat, chore, ci, docs, refactor, perf, test where appropriate.
-    Description start lowercase, imperative style.
-    Body complete sentences, proper case, concise, imperative style.
+Write the optional body using complete sentences, proper case, and the imperative mood.
+
+To signify a breaking change, append an ! immediately before the : in the header. A commit with an ! in the header MUST include a BREAKING CHANGE: footer.
+
+Start the footer with BREAKING CHANGE: followed by a colon and a space. After the prefix, explain the breaking change, what it affects, and what migration steps are necessary.
+"""
+
+review = """
+Please review the following code.
+
+Suggest improvements and explain your reasoning for each suggestion.
+"""
 "#;
     fs::write(path, default_content)?;
     Ok(())
