@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/kotarac/paip/compare/v0.1.4...v1.0.0) (2025-08-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* The configuration file format has changed from YAML to TOML. Users must convert their existing config.yaml file to config.toml. The default configuration file will now be created as config.toml.
+
+### Code Refactoring
+
+* migrate configuration to TOML ([960b3cf](https://github.com/kotarac/paip/commit/960b3cf169c767602f7b31b3b26c8c51a80fba46))
+
 ## [0.1.4](https://github.com/kotarac/paip/compare/v0.1.3...v0.1.4) (2025-06-18)
 
 

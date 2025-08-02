@@ -1,6 +1,6 @@
 [package]
 name = "paip"
-version = "0.1.4"
+version = "1.0.0"
 edition = "2024"
 
 authors = ["Stipe Kotarac <stipe@kotarac.net>"]
