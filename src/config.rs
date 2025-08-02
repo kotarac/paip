@@ -1,5 +1,4 @@
 use anyhow::{Result, anyhow};
-use dirs;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;

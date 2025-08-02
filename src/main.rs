@@ -42,7 +42,7 @@ fn main() -> Result<()> {
 
     if cli.verbose {
         eprintln!("--- Full Input to LLM ---");
-        eprintln!("{}", input_full);
+        eprintln!("{input_full}");
         eprintln!("-------------------------");
     }
 

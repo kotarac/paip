@@ -1,7 +1,6 @@
 use anyhow::{Result, anyhow};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::time::Duration;
 
 use crate::config::{Config, GeminiConfig};
@@ -157,7 +156,7 @@ impl LlmClient {
 
         if self.verbose {
             eprintln!("--- LLM API Request ---");
-            eprintln!("URL: {}", url);
+            eprintln!("URL: {url}");
             eprintln!("Body: {}", serde_json::to_string_pretty(&request_body)?);
             eprintln!("-----------------------");
         }
@@ -191,14 +190,12 @@ impl LlmClient {
             }
         }
 
-        if let Some(ref candidates) = body.candidates {
-            if let Some(candidate) = candidates.iter().next() {
-                if let Some(ref content) = candidate.content {
-                    if let Some(part) = content.parts.iter().next() {
-                        return Ok(part.text.clone());
-                    }
-                }
-            }
+        if let Some(ref candidates) = body.candidates
+            && let Some(candidate) = candidates.iter().next()
+            && let Some(ref content) = candidate.content
+            && let Some(part) = content.parts.first()
+        {
+            return Ok(part.text.clone());
         }
 
         Err(anyhow!(
