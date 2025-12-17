@@ -99,11 +99,19 @@ max_output_tokens = 65536
 thinking_budget = 0
 
 [prompt]
-summarize = "Summarize the following text."
-explain = "Explain the following concept."
-french = "Translate the following text to French."
-italian = "Translate the following text to Italian."
-latin = "Translate the following text to Latin."
+proof = "Proofread the following."
+slack = "Proofread and improve Slack message."
+sum = "Summarize the following."
+
+de = "Translate the following into German."
+en = "Translate the following into US English."
+fr = "Translate the following into French."
+hr = "Translate the following into Croatian."
+it = "Translate the following into Italian."
+
+expl = "Explain the following."
+impl = "Implement the following."
+rmc = "Remove comments."
 
 commit = """
 Write a conventional commit message in the following form.
@@ -126,7 +134,7 @@ Start the footer with BREAKING CHANGE: followed by a colon and a space. After th
 """
 
 review = """
-Please review the following code.
+Please review the following.
 
 Suggest improvements and explain your reasoning for each suggestion.
 """

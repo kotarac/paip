@@ -63,7 +63,7 @@ paip file1.txt file2.txt
 Process text from stdin and a file using a specific prompt:
 
 ```bash
-echo 'Additional context.' | paip -p summarize file.txt -
+echo 'Additional context.' | paip -p sum file.txt -
 ```
 
 Explain most recent git commit:
@@ -87,7 +87,7 @@ git diff --cached | paip -p commit | git commit -e -F -
 Translate text to Italian:
 
 ```bash
-echo "Hello world" | paip -p italian
+echo "Hello world" | paip -p it
 ```
 
 Review code:
