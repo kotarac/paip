@@ -206,4 +206,22 @@ mod tests {
         let result = assemble(None, None, input);
         assert_eq!(result, expected);
     }
+
+    #[test]
+    fn test_read_non_existent_file() {
+        let files = vec![PathBuf::from("non_existent_file_12345.txt")];
+        let stdin_cursor = Cursor::new("");
+        let result = read(&files, stdin_cursor);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_read_empty_file() -> Result<()> {
+        let temp_file = NamedTempFile::new()?;
+        let files = vec![temp_file.path().to_path_buf()];
+        let stdin_cursor = Cursor::new("");
+        let content = read(&files, stdin_cursor)?;
+        assert_eq!(content, "");
+        Ok(())
+    }
 }

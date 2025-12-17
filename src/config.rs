@@ -150,3 +150,32 @@ pub fn init_default() -> Result<()> {
     println!("Please edit the config file with your LLM provider details.");
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ensure_version_match() {
+        let config = Config {
+            version: VERSION,
+            provider: "gemini".to_string(),
+            timeout: 1000,
+            gemini: None,
+            prompt: HashMap::new(),
+        };
+        assert!(ensure_version(&config).is_ok());
+    }
+
+    #[test]
+    fn test_ensure_version_mismatch() {
+        let config = Config {
+            version: VERSION + 1,
+            provider: "gemini".to_string(),
+            timeout: 1000,
+            gemini: None,
+            prompt: HashMap::new(),
+        };
+        assert!(ensure_version(&config).is_err());
+    }
+}

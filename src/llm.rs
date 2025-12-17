@@ -18,6 +18,7 @@ impl LlmProvider {
     }
 }
 
+#[derive(Debug)]
 pub struct LlmClient {
     provider: LlmProvider,
     api_key: String,
@@ -202,5 +203,72 @@ impl LlmClient {
             "LLM response successful but no text content found. Response: {:?}",
             body
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_new_client_unsupported_provider() {
+        let config = Config {
+            version: 1,
+            provider: "unknown".to_string(),
+            timeout: 1000,
+            gemini: None,
+            prompt: HashMap::new(),
+        };
+        let result = LlmClient::new(&config, false);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Unsupported LLM provider: unknown"
+        );
+    }
+
+    #[test]
+    fn test_new_client_missing_gemini_config() {
+        let config = Config {
+            version: 1,
+            provider: "gemini".to_string(),
+            timeout: 1000,
+            gemini: None,
+            prompt: HashMap::new(),
+        };
+        let result = LlmClient::new(&config, false);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Gemini configuration not found for provider 'gemini'"
+        );
+    }
+
+    #[test]
+    fn test_new_client_default_api_key() {
+        let config = Config {
+            version: 1,
+            provider: "gemini".to_string(),
+            timeout: 1000,
+            gemini: Some(GeminiConfig {
+                key: "YOUR_GEMINI_API_KEY".to_string(),
+                model: "model".to_string(),
+                temperature: None,
+                top_p: None,
+                top_k: None,
+                max_output_tokens: None,
+                thinking_budget: None,
+            }),
+            prompt: HashMap::new(),
+        };
+        let result = LlmClient::new(&config, false);
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("API key is not configured")
+        );
     }
 }
