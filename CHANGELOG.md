@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/kotarac/paip/compare/v1.0.0...v1.1.0) (2025-12-17)
+
+
+### Features
+
+* update default config ([8925321](https://github.com/kotarac/paip/commit/8925321456b0ac4f9e4d5f220719021913777a01))
+
 ## [1.0.0](https://github.com/kotarac/paip/compare/v0.1.4...v1.0.0) (2025-08-02)
 
 
