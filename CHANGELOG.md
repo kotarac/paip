@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/kotarac/paip/compare/v1.1.0...v1.2.0) (2025-12-18)
+
+
+### Features
+
+* config json schema ([cfa453e](https://github.com/kotarac/paip/commit/cfa453ec06a55a1ab09fe2f255d3f1bb501c65f0))
+* gemini thinking_level ([533eaa3](https://github.com/kotarac/paip/commit/533eaa3ccf3bbd63b20218fd5c80aadea66cfe27))
+
 ## [1.1.0](https://github.com/kotarac/paip/compare/v1.0.0...v1.1.0) (2025-12-17)
 
 
