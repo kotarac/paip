@@ -31,6 +31,8 @@ pub struct GeminiConfig {
     pub max_output_tokens: Option<u32>,
     #[serde(default)]
     pub thinking_budget: Option<u32>,
+    #[serde(default)]
+    pub thinking_level: Option<String>,
 }
 
 pub fn load() -> Result<Config> {
@@ -92,11 +94,9 @@ timeout = 90000
 [gemini]
 key = "YOUR_GEMINI_API_KEY"
 model = "gemini-2.5-flash"
-temperature = 0.0
-top_p = 0.95
-top_k = 64
+temperature = 1.0
 max_output_tokens = 65536
-thinking_budget = 0
+thinking_level = "minimal"
 
 [prompt]
 proof = "Proofread the following."

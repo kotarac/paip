@@ -68,7 +68,65 @@ impl LlmClient {
             LlmProvider::Gemini => self.send_gemini_request(prompt),
         }
     }
+}
 
+#[derive(Serialize, Deserialize, Debug)]
+struct Content {
+    parts: Vec<Part>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Part {
+    text: String,
+}
+
+#[derive(Serialize)]
+struct ApiThinkingConfig {
+    #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingBudget")]
+    thinking_budget: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingLevel")]
+    thinking_level: Option<String>,
+}
+
+#[derive(Serialize)]
+struct ApiGenerationConfig {
+    #[serde(skip_serializing_if = "Option::is_none", rename = "temperature")]
+    temperature: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "topP")]
+    top_p: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "topK")]
+    top_k: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "maxOutputTokens")]
+    max_output_tokens: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingConfig")]
+    thinking_config: Option<ApiThinkingConfig>,
+}
+
+#[derive(Serialize)]
+struct RequestBody {
+    contents: Vec<Content>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "generationConfig")]
+    generation_config: Option<ApiGenerationConfig>,
+}
+
+#[derive(Deserialize, Debug)]
+struct ResponseBody {
+    candidates: Option<Vec<Candidate>>,
+    error: Option<ApiError>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Candidate {
+    content: Option<Content>,
+}
+
+#[derive(Deserialize, Debug)]
+struct ApiError {
+    code: u16,
+    message: String,
+}
+
+impl LlmClient {
     fn send_gemini_request(&self, prompt: &str) -> Result<String> {
         let gemini_config: &GeminiConfig = self
             .config
@@ -82,68 +140,26 @@ impl LlmClient {
             model, self.api_key
         );
 
-        #[derive(Serialize, Deserialize, Debug)]
-        struct Content {
-            parts: Vec<Part>,
-        }
+        let api_generation_config = self.config.gemini.as_ref().map(|gc| {
+            let thinking_config = if let Some(ref level) = gc.thinking_level {
+                Some(ApiThinkingConfig {
+                    thinking_level: Some(level.clone()),
+                    thinking_budget: None,
+                })
+            } else {
+                gc.thinking_budget.map(|tb| ApiThinkingConfig {
+                    thinking_budget: Some(tb),
+                    thinking_level: None,
+                })
+            };
 
-        #[derive(Serialize, Deserialize, Debug)]
-        struct Part {
-            text: String,
-        }
-
-        #[derive(Serialize)]
-        struct ApiThinkingConfig {
-            #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingBudget")]
-            thinking_budget: Option<u32>,
-        }
-
-        #[derive(Serialize)]
-        struct ApiGenerationConfig {
-            #[serde(skip_serializing_if = "Option::is_none", rename = "temperature")]
-            temperature: Option<f32>,
-            #[serde(skip_serializing_if = "Option::is_none", rename = "topP")]
-            top_p: Option<f32>,
-            #[serde(skip_serializing_if = "Option::is_none", rename = "topK")]
-            top_k: Option<u32>,
-            #[serde(skip_serializing_if = "Option::is_none", rename = "maxOutputTokens")]
-            max_output_tokens: Option<u32>,
-            #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingConfig")]
-            thinking_config: Option<ApiThinkingConfig>,
-        }
-
-        #[derive(Serialize)]
-        struct RequestBody {
-            contents: Vec<Content>,
-            #[serde(skip_serializing_if = "Option::is_none", rename = "generationConfig")]
-            generation_config: Option<ApiGenerationConfig>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct ResponseBody {
-            candidates: Option<Vec<Candidate>>,
-            error: Option<ApiError>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct Candidate {
-            content: Option<Content>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct ApiError {
-            code: u16,
-            message: String,
-        }
-
-        let api_generation_config = self.config.gemini.as_ref().map(|gc| ApiGenerationConfig {
-            temperature: gc.temperature,
-            top_p: gc.top_p,
-            top_k: gc.top_k,
-            max_output_tokens: gc.max_output_tokens,
-            thinking_config: gc.thinking_budget.map(|tb| ApiThinkingConfig {
-                thinking_budget: Some(tb),
-            }),
+            ApiGenerationConfig {
+                temperature: gc.temperature,
+                top_p: gc.top_p,
+                top_k: gc.top_k,
+                max_output_tokens: gc.max_output_tokens,
+                thinking_config,
+            }
         });
 
         let request_body = RequestBody {
@@ -246,6 +262,53 @@ mod tests {
     }
 
     #[test]
+    fn test_gemini_thinking_config_logic() {
+        let mut gc = GeminiConfig {
+            key: "key".to_string(),
+            model: "model".to_string(),
+            temperature: Some(1.0),
+            top_p: None,
+            top_k: None,
+            max_output_tokens: None,
+            thinking_budget: Some(100),
+            thinking_level: Some("high".to_string()),
+        };
+
+        let thinking_config_high = if let Some(ref level) = gc.thinking_level {
+            Some(ApiThinkingConfig {
+                thinking_level: Some(level.clone()),
+                thinking_budget: None,
+            })
+        } else {
+            gc.thinking_budget.map(|tb| ApiThinkingConfig {
+                thinking_budget: Some(tb),
+                thinking_level: None,
+            })
+        };
+
+        let tc = thinking_config_high.unwrap();
+        assert_eq!(tc.thinking_level, Some("high".to_string()));
+        assert!(tc.thinking_budget.is_none());
+
+        gc.thinking_level = None;
+        let thinking_config_budget = if let Some(ref level) = gc.thinking_level {
+            Some(ApiThinkingConfig {
+                thinking_level: Some(level.clone()),
+                thinking_budget: None,
+            })
+        } else {
+            gc.thinking_budget.map(|tb| ApiThinkingConfig {
+                thinking_budget: Some(tb),
+                thinking_level: None,
+            })
+        };
+
+        let tc = thinking_config_budget.unwrap();
+        assert!(tc.thinking_level.is_none());
+        assert_eq!(tc.thinking_budget, Some(100));
+    }
+
+    #[test]
     fn test_new_client_default_api_key() {
         let config = Config {
             version: 1,
@@ -259,6 +322,7 @@ mod tests {
                 top_k: None,
                 max_output_tokens: None,
                 thinking_budget: None,
+                thinking_level: None,
             }),
             prompt: HashMap::new(),
         };
