@@ -102,6 +102,30 @@ struct ApiGenerationConfig {
     thinking_config: Option<ApiThinkingConfig>,
 }
 
+impl From<&GeminiConfig> for ApiGenerationConfig {
+    fn from(gc: &GeminiConfig) -> Self {
+        let thinking_config = if let Some(ref level) = gc.thinking_level {
+            Some(ApiThinkingConfig {
+                thinking_level: Some(level.clone()),
+                thinking_budget: None,
+            })
+        } else {
+            gc.thinking_budget.map(|tb| ApiThinkingConfig {
+                thinking_budget: Some(tb),
+                thinking_level: None,
+            })
+        };
+
+        ApiGenerationConfig {
+            temperature: gc.temperature,
+            top_p: gc.top_p,
+            top_k: gc.top_k,
+            max_output_tokens: gc.max_output_tokens,
+            thinking_config,
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct RequestBody {
     contents: Vec<Content>,
@@ -140,27 +164,7 @@ impl LlmClient {
             model, self.api_key
         );
 
-        let api_generation_config = self.config.gemini.as_ref().map(|gc| {
-            let thinking_config = if let Some(ref level) = gc.thinking_level {
-                Some(ApiThinkingConfig {
-                    thinking_level: Some(level.clone()),
-                    thinking_budget: None,
-                })
-            } else {
-                gc.thinking_budget.map(|tb| ApiThinkingConfig {
-                    thinking_budget: Some(tb),
-                    thinking_level: None,
-                })
-            };
-
-            ApiGenerationConfig {
-                temperature: gc.temperature,
-                top_p: gc.top_p,
-                top_k: gc.top_k,
-                max_output_tokens: gc.max_output_tokens,
-                thinking_config,
-            }
-        });
+        let api_generation_config = self.config.gemini.as_ref().map(ApiGenerationConfig::from);
 
         let request_body = RequestBody {
             contents: vec![Content {
@@ -274,38 +278,16 @@ mod tests {
             thinking_level: Some("high".to_string()),
         };
 
-        let thinking_config_high = if let Some(ref level) = gc.thinking_level {
-            Some(ApiThinkingConfig {
-                thinking_level: Some(level.clone()),
-                thinking_budget: None,
-            })
-        } else {
-            gc.thinking_budget.map(|tb| ApiThinkingConfig {
-                thinking_budget: Some(tb),
-                thinking_level: None,
-            })
-        };
-
-        let tc = thinking_config_high.unwrap();
-        assert_eq!(tc.thinking_level, Some("high".to_string()));
-        assert!(tc.thinking_budget.is_none());
+        let api_config_high = ApiGenerationConfig::from(&gc);
+        let tc_high = api_config_high.thinking_config.unwrap();
+        assert_eq!(tc_high.thinking_level, Some("high".to_string()));
+        assert!(tc_high.thinking_budget.is_none());
 
         gc.thinking_level = None;
-        let thinking_config_budget = if let Some(ref level) = gc.thinking_level {
-            Some(ApiThinkingConfig {
-                thinking_level: Some(level.clone()),
-                thinking_budget: None,
-            })
-        } else {
-            gc.thinking_budget.map(|tb| ApiThinkingConfig {
-                thinking_budget: Some(tb),
-                thinking_level: None,
-            })
-        };
-
-        let tc = thinking_config_budget.unwrap();
-        assert!(tc.thinking_level.is_none());
-        assert_eq!(tc.thinking_budget, Some(100));
+        let api_config_budget = ApiGenerationConfig::from(&gc);
+        let tc_budget = api_config_budget.thinking_config.unwrap();
+        assert!(tc_budget.thinking_level.is_none());
+        assert_eq!(tc_budget.thinking_budget, Some(100));
     }
 
     #[test]
