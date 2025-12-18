@@ -1,0 +1,4 @@
+exclude = ["target/**"]
+
+[formatting]
+column_width = 240

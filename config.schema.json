@@ -1,0 +1,82 @@
+{
+  "$id": "urn:paip_toml_schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "version",
+    "provider",
+    "timeout"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "gemini"
+      ]
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Timeout in milliseconds"
+    },
+    "gemini": {
+      "type": "object",
+      "required": [
+        "key",
+        "model"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "top_p": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "top_k": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "thinking_budget": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "thinking_level": {
+          "type": "string",
+          "enum": [
+            "minimal",
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      }
+    },
+    "prompt": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

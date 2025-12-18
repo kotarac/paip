@@ -86,7 +86,9 @@ fn create_default(path: &PathBuf) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let default_content = r#"version = 1
+    let default_content = r#"#:schema https://raw.githubusercontent.com/kotarac/paip/refs/heads/master/config.schema.json
+
+version = 1
 
 provider = "gemini"
 timeout = 90000
