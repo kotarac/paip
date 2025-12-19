@@ -103,6 +103,19 @@ mod tests {
     }
 
     #[test]
+    fn test_default_config_is_valid() {
+        let default_content = include_str!("../config.toml");
+        let config: Result<Config, _> = toml::from_str(default_content);
+        assert!(
+            config.is_ok(),
+            "Default config should be valid TOML: {:?}",
+            config.err()
+        );
+        let config = config.unwrap();
+        assert_eq!(config.version, VERSION);
+    }
+
+    #[test]
     fn test_ensure_version_mismatch() {
         let config = Config {
             version: VERSION + 1,

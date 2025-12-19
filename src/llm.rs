@@ -215,19 +215,23 @@ impl LlmClient {
             }
         }
 
-        if let Some(ref candidates) = body.candidates
-            && let Some(candidate) = candidates.iter().next()
-            && let Some(ref content) = candidate.content
-            && let Some(part) = content.parts.first()
-        {
-            return Ok(part.text.clone());
-        }
-
-        Err(anyhow!(
-            "LLM response successful but no text content found. Response: {:?}",
-            body
-        ))
+        extract_text(body)
     }
+}
+
+fn extract_text(body: ResponseBody) -> Result<String> {
+    if let Some(ref candidates) = body.candidates
+        && let Some(candidate) = candidates.iter().next()
+        && let Some(ref content) = candidate.content
+        && let Some(part) = content.parts.first()
+    {
+        return Ok(part.text.clone());
+    }
+
+    Err(anyhow!(
+        "LLM response successful but no text content found. Response: {:?}",
+        body
+    ))
 }
 
 #[cfg(test)]
@@ -292,6 +296,73 @@ mod tests {
         let tc_budget = api_config_budget.thinking_config.unwrap();
         assert!(tc_budget.thinking_level.is_none());
         assert_eq!(tc_budget.thinking_budget, Some(100));
+    }
+
+    #[test]
+    fn test_extract_text_success() {
+        let body = ResponseBody {
+            candidates: Some(vec![Candidate {
+                content: Some(Content {
+                    parts: vec![Part {
+                        text: "hello world".to_string(),
+                    }],
+                }),
+            }]),
+            error: None,
+        };
+        let res = extract_text(body).unwrap();
+        assert_eq!(res, "hello world");
+    }
+
+    #[test]
+    fn test_extract_text_no_candidates() {
+        let body = ResponseBody {
+            candidates: None,
+            error: None,
+        };
+        let res = extract_text(body);
+        assert!(res.is_err());
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("no text content found")
+        );
+    }
+
+    #[test]
+    fn test_response_body_deserialization_error() {
+        let json = r#"{
+            "error": {
+                "code": 400,
+                "message": "Invalid API key"
+            }
+        }"#;
+        let body: ResponseBody = serde_json::from_str(json).unwrap();
+        assert!(body.error.is_some());
+        let err = body.error.unwrap();
+        assert_eq!(err.code, 400);
+        assert_eq!(err.message, "Invalid API key");
+    }
+
+    #[test]
+    fn test_response_body_deserialization_success() {
+        let json = r#"{
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "text": "result"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }"#;
+        let body: ResponseBody = serde_json::from_str(json).unwrap();
+        assert!(body.candidates.is_some());
+        let text = extract_text(body).unwrap();
+        assert_eq!(text, "result");
     }
 
     #[test]

@@ -21,16 +21,7 @@ fn main() -> Result<()> {
 
     let config = config::load()?;
 
-    let prompt_text_option = cli
-        .prompt
-        .map(|name| {
-            config
-                .prompt
-                .get(&name)
-                .cloned()
-                .ok_or_else(|| anyhow!("Prompt '{}' not found in configuration.", name))
-        })
-        .transpose()?;
+    let prompt_text_option = resolve_prompt(&config, cli.prompt.as_deref())?;
 
     let input_content = read(&cli.files, io::stdin())?;
 
@@ -52,6 +43,18 @@ fn main() -> Result<()> {
     println!("{}", response.trim_end());
 
     Ok(())
+}
+
+fn resolve_prompt(config: &config::Config, prompt_name: Option<&str>) -> Result<Option<String>> {
+    prompt_name
+        .map(|name| {
+            config
+                .prompt
+                .get(name)
+                .cloned()
+                .ok_or_else(|| anyhow!("Prompt '{}' not found in configuration.", name))
+        })
+        .transpose()
 }
 
 fn read<R: Read>(files: &[PathBuf], stdin_reader: R) -> Result<String> {
@@ -218,6 +221,50 @@ mod tests {
         let stdin_cursor = Cursor::new("");
         let content = read(&files, stdin_cursor)?;
         assert_eq!(content, "");
+        Ok(())
+    }
+
+    #[test]
+    fn test_resolve_prompt_found() -> Result<()> {
+        let mut prompt = std::collections::HashMap::new();
+        prompt.insert("p1".to_string(), "text1".to_string());
+        let config = crate::config::Config {
+            version: crate::config::VERSION,
+            provider: "p".to_string(),
+            timeout: 0,
+            gemini: None,
+            prompt,
+        };
+        let res = resolve_prompt(&config, Some("p1"))?;
+        assert_eq!(res, Some("text1".to_string()));
+        Ok(())
+    }
+
+    #[test]
+    fn test_resolve_prompt_not_found() {
+        let config = crate::config::Config {
+            version: crate::config::VERSION,
+            provider: "p".to_string(),
+            timeout: 0,
+            gemini: None,
+            prompt: std::collections::HashMap::new(),
+        };
+        let res = resolve_prompt(&config, Some("p1"));
+        assert!(res.is_err());
+        assert!(res.unwrap_err().to_string().contains("not found"));
+    }
+
+    #[test]
+    fn test_resolve_prompt_none() -> Result<()> {
+        let config = crate::config::Config {
+            version: crate::config::VERSION,
+            provider: "p".to_string(),
+            timeout: 0,
+            gemini: None,
+            prompt: std::collections::HashMap::new(),
+        };
+        let res = resolve_prompt(&config, None)?;
+        assert!(res.is_none());
         Ok(())
     }
 }
