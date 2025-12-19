@@ -29,24 +29,23 @@ pub struct LlmClient {
 
 impl LlmClient {
     pub fn new(config: &Config, verbose: bool) -> Result<Self> {
-        let provider_enum = match config.provider.as_str() {
-            "gemini" => LlmProvider::Gemini,
+        let (provider, api_key) = match config.provider.as_str() {
+            "gemini" => {
+                let key = config
+                    .gemini
+                    .as_ref()
+                    .ok_or_else(|| anyhow!("Gemini configuration not found for provider 'gemini'"))?
+                    .key
+                    .clone();
+                (LlmProvider::Gemini, key)
+            }
             _ => return Err(anyhow!("Unsupported LLM provider: {}", config.provider)),
-        };
-
-        let api_key = match provider_enum {
-            LlmProvider::Gemini => config
-                .gemini
-                .as_ref()
-                .ok_or_else(|| anyhow!("Gemini configuration not found for provider 'gemini'"))?
-                .key
-                .clone(),
         };
 
         if api_key.is_empty() || api_key == "YOUR_GEMINI_API_KEY" {
             return Err(anyhow!(
                 "API key is not configured for provider: {}",
-                provider_enum.as_str()
+                provider.as_str()
             ));
         }
 
@@ -55,7 +54,7 @@ impl LlmClient {
             .build()?;
 
         Ok(Self {
-            provider: provider_enum,
+            provider,
             api_key,
             client,
             config: config.clone(),
@@ -160,8 +159,8 @@ impl LlmClient {
 
         let model = &gemini_config.model;
         let url = format!(
-            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
-            model, self.api_key
+            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent",
+            model
         );
 
         let api_generation_config = self.config.gemini.as_ref().map(ApiGenerationConfig::from);
@@ -182,7 +181,12 @@ impl LlmClient {
             eprintln!("-----------------------");
         }
 
-        let res = self.client.post(&url).json(&request_body).send()?;
+        let res = self
+            .client
+            .post(&url)
+            .query(&[("key", &self.api_key)])
+            .json(&request_body)
+            .send()?;
 
         let status = res.status();
         let body_text = res.text()?;

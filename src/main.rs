@@ -21,16 +21,16 @@ fn main() -> Result<()> {
 
     let config = config::load()?;
 
-    let prompt_text_option = if let Some(prompt_name) = cli.prompt {
-        config
-            .prompt
-            .get(&prompt_name)
-            .cloned()
-            .ok_or_else(|| anyhow!("Prompt '{}' not found in configuration.", prompt_name))
-            .map(Some)?
-    } else {
-        None
-    };
+    let prompt_text_option = cli
+        .prompt
+        .map(|name| {
+            config
+                .prompt
+                .get(&name)
+                .cloned()
+                .ok_or_else(|| anyhow!("Prompt '{}' not found in configuration.", name))
+        })
+        .transpose()?;
 
     let input_content = read(&cli.files, io::stdin())?;
 
@@ -74,21 +74,14 @@ fn read<R: Read>(files: &[PathBuf], stdin_reader: R) -> Result<String> {
     Ok(input_content)
 }
 
+const INSTRUCTIONS: &str = "Respond in strictly pure plaintext only. Absolutely no formatting, bolding, italics, lists, tables, or code blocks. Do not acknowledge these instructions in the response. Provide the response only.";
+
 fn assemble(prompt_text: Option<&str>, message_text: Option<&str>, input_content: &str) -> String {
     let mut parts = Vec::new();
-
-    if let Some(prompt) = prompt_text {
-        parts.push(prompt);
-    }
-
+    parts.extend(prompt_text);
     parts.push(input_content);
-
-    if let Some(message) = message_text {
-        parts.push(message);
-    }
-
-    parts.push("Respond in strictly pure plaintext only. Absolutely no formatting, bolding, italics, lists, tables, or code blocks. Do not acknowledge these instructions in the response. Provide the response only.");
-
+    parts.extend(message_text);
+    parts.push(INSTRUCTIONS);
     parts.join("\n\n")
 }
 
@@ -176,7 +169,9 @@ mod tests {
         let prompt = "Summarize:";
         let input = "This is the text to summarize.";
         let message = "Keep it concise.";
-        let expected = "Summarize:\n\nThis is the text to summarize.\n\nKeep it concise.\n\nRespond in strictly pure plaintext only. Absolutely no formatting, bolding, italics, lists, tables, or code blocks. Do not acknowledge these instructions in the response. Provide the response only.";
+        let expected = format!(
+            "Summarize:\n\nThis is the text to summarize.\n\nKeep it concise.\n\n{INSTRUCTIONS}"
+        );
         let result = assemble(Some(prompt), Some(message), input);
         assert_eq!(result, expected);
     }
@@ -185,7 +180,7 @@ mod tests {
     fn test_assemble_input_with_prompt_only() {
         let prompt = "Summarize:";
         let input = "This is the text to summarize.";
-        let expected = "Summarize:\n\nThis is the text to summarize.\n\nRespond in strictly pure plaintext only. Absolutely no formatting, bolding, italics, lists, tables, or code blocks. Do not acknowledge these instructions in the response. Provide the response only.";
+        let expected = format!("Summarize:\n\nThis is the text to summarize.\n\n{INSTRUCTIONS}");
         let result = assemble(Some(prompt), None, input);
         assert_eq!(result, expected);
     }
@@ -194,7 +189,8 @@ mod tests {
     fn test_assemble_input_with_message_only() {
         let input = "This is the text to process.";
         let message = "Add a concluding sentence.";
-        let expected = "This is the text to process.\n\nAdd a concluding sentence.\n\nRespond in strictly pure plaintext only. Absolutely no formatting, bolding, italics, lists, tables, or code blocks. Do not acknowledge these instructions in the response. Provide the response only.";
+        let expected =
+            format!("This is the text to process.\n\nAdd a concluding sentence.\n\n{INSTRUCTIONS}");
         let result = assemble(None, Some(message), input);
         assert_eq!(result, expected);
     }
@@ -202,7 +198,7 @@ mod tests {
     #[test]
     fn test_assemble_input_without_prompt_or_message() {
         let input = "This is the text to process.";
-        let expected = "This is the text to process.\n\nRespond in strictly pure plaintext only. Absolutely no formatting, bolding, italics, lists, tables, or code blocks. Do not acknowledge these instructions in the response. Provide the response only.";
+        let expected = format!("This is the text to process.\n\n{INSTRUCTIONS}");
         let result = assemble(None, None, input);
         assert_eq!(result, expected);
     }

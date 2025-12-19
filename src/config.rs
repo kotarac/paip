@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
@@ -37,25 +37,16 @@ pub struct GeminiConfig {
 
 pub fn load() -> Result<Config> {
     let config_path = get_path()?;
-    let config_str = fs::read_to_string(&config_path).map_err(|e| {
-        if e.kind() == std::io::ErrorKind::NotFound {
-            anyhow!(
-                "Configuration file not found at {}. Run with --init-config to create a default.",
-                config_path.display()
-            )
-        } else {
-            anyhow!(
-                "Failed to read configuration file at {}: {}",
-                config_path.display(),
-                e
-            )
-        }
+    let config_str = fs::read_to_string(&config_path).with_context(|| {
+        format!(
+            "Failed to read configuration file at {}. Run with --init-config to create a default.",
+            config_path.display()
+        )
     })?;
-    let config: Config = toml::from_str(&config_str).map_err(|e| {
-        anyhow!(
-            "Failed to parse configuration file at {}: {}",
-            config_path.display(),
-            e
+    let config: Config = toml::from_str(&config_str).with_context(|| {
+        format!(
+            "Failed to parse configuration file at {}",
+            config_path.display()
         )
     })?;
     ensure_version(&config)?;
@@ -63,23 +54,19 @@ pub fn load() -> Result<Config> {
 }
 
 fn ensure_version(config: &Config) -> Result<()> {
-    if config.version != VERSION {
-        Err(anyhow!(
-            "Configuration file version mismatch. Expected major version {}, found {}. Please update your config file or run with --init-config to generate a new one.",
-            VERSION,
-            config.version
-        ))
-    } else {
-        Ok(())
-    }
+    anyhow::ensure!(
+        config.version == VERSION,
+        "Configuration file version mismatch. Expected major version {}, found {}. Please update your config file or run with --init-config to generate a new one.",
+        VERSION,
+        config.version
+    );
+    Ok(())
 }
 
 fn get_path() -> Result<PathBuf> {
-    let mut config_dir =
-        dirs::config_dir().ok_or_else(|| anyhow!("Could not find config directory"))?;
-    config_dir.push("paip");
-    config_dir.push("config.toml");
-    Ok(config_dir)
+    dirs::config_dir()
+        .map(|d| d.join("paip").join("config.toml"))
+        .ok_or_else(|| anyhow!("Could not find config directory"))
 }
 
 fn create_default(path: &PathBuf) -> Result<()> {
