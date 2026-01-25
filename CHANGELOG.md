@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/kotarac/paip/compare/v1.2.0...v1.3.0) (2026-01-25)
+
+
+### Features
+
+* support key_cmd for api keys ([088d9b5](https://github.com/kotarac/paip/commit/088d9b516f379a5ff44aa277d053020a829028ee))
+
 ## [1.2.0](https://github.com/kotarac/paip/compare/v1.1.0...v1.2.0) (2025-12-18)
 
 
