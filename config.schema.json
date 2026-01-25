@@ -29,11 +29,25 @@
     "gemini": {
       "type": "object",
       "required": [
-        "key",
         "model"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "key"
+          ]
+        },
+        {
+          "required": [
+            "key_cmd"
+          ]
+        }
       ],
       "properties": {
         "key": {
+          "type": "string"
+        },
+        "key_cmd": {
           "type": "string"
         },
         "model": {

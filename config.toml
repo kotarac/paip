@@ -6,7 +6,8 @@ provider = "gemini"
 timeout = 90000
 
 [gemini]
-key = "YOUR_GEMINI_API_KEY"
+# key = "YOUR_GEMINI_API_KEY"
+key_cmd = "pass gemini-api-key"
 model = "gemini-2.5-flash"
 temperature = 1.0
 max_output_tokens = 65536

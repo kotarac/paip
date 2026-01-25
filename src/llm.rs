@@ -1,6 +1,7 @@
 use anyhow::{Result, anyhow};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
+use std::process::Command;
 use std::time::Duration;
 
 use crate::config::{Config, GeminiConfig};
@@ -31,12 +32,10 @@ impl LlmClient {
     pub fn new(config: &Config, verbose: bool) -> Result<Self> {
         let (provider, api_key) = match config.provider.as_str() {
             "gemini" => {
-                let key = config
-                    .gemini
-                    .as_ref()
-                    .ok_or_else(|| anyhow!("Gemini configuration not found for provider 'gemini'"))?
-                    .key
-                    .clone();
+                let gemini_config = config.gemini.as_ref().ok_or_else(|| {
+                    anyhow!("Gemini configuration not found for provider 'gemini'")
+                })?;
+                let key = resolve_api_key(gemini_config)?;
                 (LlmProvider::Gemini, key)
             }
             _ => return Err(anyhow!("Unsupported LLM provider: {}", config.provider)),
@@ -66,6 +65,33 @@ impl LlmClient {
         match self.provider {
             LlmProvider::Gemini => self.send_gemini_request(prompt),
         }
+    }
+}
+
+fn resolve_api_key(config: &GeminiConfig) -> Result<String> {
+    match (config.key.as_deref(), config.key_cmd.as_deref()) {
+        (Some(_), Some(_)) => Err(anyhow!(
+            "Only one of gemini.key or gemini.key_cmd can be set"
+        )),
+        (Some(key), None) => Ok(key.to_string()),
+        (None, Some(cmd)) => {
+            let output = Command::new("sh").arg("-c").arg(cmd).output()?;
+            if !output.status.success() {
+                let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+                let detail = if stderr.is_empty() {
+                    "key_cmd failed with a non-zero exit status".to_string()
+                } else {
+                    format!("key_cmd failed: {}", stderr)
+                };
+                return Err(anyhow!(detail));
+            }
+            let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if stdout.is_empty() {
+                return Err(anyhow!("key_cmd returned empty output"));
+            }
+            Ok(stdout)
+        }
+        (None, None) => Err(anyhow!("API key is not configured for provider: gemini")),
     }
 }
 
@@ -274,9 +300,63 @@ mod tests {
     }
 
     #[test]
+    fn test_new_client_key_cmd() -> Result<()> {
+        let config = Config {
+            version: 1,
+            provider: "gemini".to_string(),
+            timeout: 1000,
+            gemini: Some(GeminiConfig {
+                key: None,
+                key_cmd: Some("printf test_key".to_string()),
+                model: "model".to_string(),
+                temperature: None,
+                top_p: None,
+                top_k: None,
+                max_output_tokens: None,
+                thinking_budget: None,
+                thinking_level: None,
+            }),
+            prompt: HashMap::new(),
+        };
+        let result = LlmClient::new(&config, false);
+        assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn test_new_client_key_and_key_cmd() {
+        let config = Config {
+            version: 1,
+            provider: "gemini".to_string(),
+            timeout: 1000,
+            gemini: Some(GeminiConfig {
+                key: Some("key".to_string()),
+                key_cmd: Some("printf test_key".to_string()),
+                model: "model".to_string(),
+                temperature: None,
+                top_p: None,
+                top_k: None,
+                max_output_tokens: None,
+                thinking_budget: None,
+                thinking_level: None,
+            }),
+            prompt: HashMap::new(),
+        };
+        let result = LlmClient::new(&config, false);
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Only one of gemini.key or gemini.key_cmd")
+        );
+    }
+
+    #[test]
     fn test_gemini_thinking_config_logic() {
         let mut gc = GeminiConfig {
-            key: "key".to_string(),
+            key: Some("key".to_string()),
+            key_cmd: None,
             model: "model".to_string(),
             temperature: Some(1.0),
             top_p: None,
@@ -372,7 +452,8 @@ mod tests {
             provider: "gemini".to_string(),
             timeout: 1000,
             gemini: Some(GeminiConfig {
-                key: "YOUR_GEMINI_API_KEY".to_string(),
+                key: Some("YOUR_GEMINI_API_KEY".to_string()),
+                key_cmd: None,
                 model: "model".to_string(),
                 temperature: None,
                 top_p: None,

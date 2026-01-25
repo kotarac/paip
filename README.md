@@ -18,7 +18,7 @@ This will create a `config.toml` file in the appropriate configuration directory
 Edit this file to:
 
 - Specify the `provider` (e.g., `gemini`).
-- Add your LLM provider's API `key` under the corresponding provider section (e.g., under `gemini:`).
+- Add your LLM provider's API `key` or `key_cmd` under the corresponding provider section (e.g., under `gemini:`). Only one of these can be set.
 - Configure other settings like the `timeout` (in milliseconds), model (e.g., `gemini-2.5-flash`), temperature, top_p, top_k, max_output_tokens, and thinking_budget under the provider section.
 
 Currently, only the `gemini` provider is supported.

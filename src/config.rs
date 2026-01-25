@@ -19,7 +19,10 @@ pub struct Config {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct GeminiConfig {
-    pub key: String,
+    #[serde(default)]
+    pub key: Option<String>,
+    #[serde(default)]
+    pub key_cmd: Option<String>,
     pub model: String,
     #[serde(default)]
     pub temperature: Option<f32>,
